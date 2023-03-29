@@ -1,0 +1,14 @@
+kind: role
+metadata:
+  name: kube-user
+version: v5
+spec:
+  allow:
+    kubernetes_labels:
+      '*': '*'
+    kubernetes_groups:
+    - view
+    kubernetes_users:
+    - USER
+  deny: {}
+

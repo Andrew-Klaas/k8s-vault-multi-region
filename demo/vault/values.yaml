@@ -1,0 +1,30 @@
+# Available parameters and their default values for the Vault chart.
+
+global:
+  enabled: true
+  tlsDisable: true
+
+injector:
+  enabled: false
+  replicas: 1
+
+server:
+  dev:
+    enabled: true
+    devRootToken: "root"
+
+  service:
+    enabled: true
+    type: ClusterIP
+
+ui:
+  enabled: false
+  serviceType: "ClusterIP"
+  externalPort: 8200
+
+csi:
+  enabled: false
+  image:
+    repository: "hashicorp/vault-csi-provider"
+    tag: "0.2.0"
+    pullPolicy: IfNotPresent

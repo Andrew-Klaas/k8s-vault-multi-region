@@ -1,0 +1,59 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postgresql-client
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgresql-client
+  namespace: teleport-cluster
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: postgresql-client
+  namespace: teleport-cluster
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: postgresql-client
+  namespace: teleport-cluster
+roleRef:
+  kind: Role
+  name: postgresql-client
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: postgresql-client
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgresql-client
+  namespace: teleport-cluster
+  labels:
+    app: postgresql-client
+  annotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"    
+spec:
+  serviceAccountName: postgresql-client
+  securityContext:
+    runAsNonRoot: true
+    supplementalGroups: [ 10001] 
+    fsGroup: 10001    
+  containers:
+    - name: postgresql-client
+      image: andreswebs/postgresql-client
+      imagePullPolicy: Always
+      securityContext:
+        runAsUser: 1000      
+      stdin: true
+      tty: true
+      command: ["/bin/sh"]
