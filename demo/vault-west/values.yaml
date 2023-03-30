@@ -1,0 +1,52 @@
+# Available parameters and their default values for the Vault chart.
+
+global:
+  enabled: true
+  tlsDisable: true
+
+# injector:
+#   enabled: true
+#   replicas: 1
+
+server:
+  enabled: true
+  # dev:
+  #   enabled: true
+  #   devRootToken: "root"
+  ha:
+    enabled: true
+    replicas: 3
+    raft: 
+      enabled: true
+      config: |
+        ui = true
+        listener "tcp" {
+          tls_disable = 1
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+          # Enable unauthenticated metrics access (necessary for Prometheus Operator)
+          #telemetry {
+          #  unauthenticated_metrics_access = "true"
+          #}
+        }
+        storage "raft" {
+          path = "/vault/data"
+        }
+        service_registration "kubernetes" {}
+
+#   service:
+#     enabled: true
+#     type: ClusterIP
+
+ui:
+  enabled: true
+  serviceType: "ClusterIP"
+  externalPort: 8200
+
+csi:
+  enabled: false
+  image:
+    repository: "hashicorp/vault-csi-provider"
+    tag: "0.2.0"
+    pullPolicy: IfNotPresent
+
