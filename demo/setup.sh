@@ -47,7 +47,7 @@ kubectl apply -f pq_template/
 
 kubectl wait --timeout=180s --for=condition=Ready $(kubectl get pod pq-postgresql-0 -o name)
 
-#helm install vault hashicorp/vault -f vault/values.yaml --version 0.19.0
+helm install vault hashicorp/vault -f vault/values.yaml 
 kubectl apply -f vault_template
 
 sleep 60
@@ -133,4 +133,25 @@ vault write -f transit/keys/my-key
 
 
 kubectl apply -f go_vault_demo/
+
+
+exit 0
+
+kubectl exec -ti vault-0 -- vault operator init
+kubectl exec -ti vault-0 -- vault operator unseal
+
+kubectl exec -ti vault-1 -- vault operator raft join http://vault-0.vault-internal:8200
+kubectl exec -ti vault-1 -- vault operator unseal
+
+kubectl exec -ti vault-2 -- vault operator raft join http://vault-0.vault-internal:8200
+kubectl exec -ti vault-2 -- vault operator unseal
+
+
+Unseal Key 1: /eK7ujYQnChM/iAEG4EvOZ4TVRKuPysFNF99EyD0ViV5
+Unseal Key 2: mCsJC9J1j85tRHlTxq4zx94UtKVAfQx19G/tId1IYcfH
+Unseal Key 3: 4SSJPbvcgvEaI3nyX4f5NqJWiB54NHpZX9Mq5pzxo/rK
+Unseal Key 4: 4eLWH3EXtdjvgzopRPxWvfIQlTlrNd1Jcthj7i3obpnI
+Unseal Key 5: 0JAJgsG8IV92ZA0aninpwjpoHntXAOe64609J/sDt7LO
+
+Initial Root Token: hvs.Xw2d971IS1LmBmLaRwAmCbYt
 

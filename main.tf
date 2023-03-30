@@ -18,9 +18,13 @@ provider "aws" {
 }
 
 data "aws_availability_zones" "available" {}
+data "aws_availability_zones" "available_west" {
+  provider = aws.us-west-1
+}
 
 locals {
   cluster_name = "ak-${random_string.suffix.result}"
+  cluster_name_west = "ak-${random_string.suffix.result}"
   name = "ak-teleport"
   tags = {
     Owner       = "user"
@@ -33,7 +37,18 @@ resource "random_string" "suffix" {
   special = false
 }
 
-module "vpc" {
+resource "aws_kms_key" "east-key" {
+  description             = "KMS key 1"
+  deletion_window_in_days = 10
+  provider = aws.us-east-1
+}
+resource "aws_kms_key" "west-key" {
+  description             = "KMS key 1"
+  deletion_window_in_days = 10
+  provider = aws.us-west-1
+}
+
+module "vpc-east" {
   providers = {
     aws = aws.us-east-1
   }
@@ -58,10 +73,42 @@ module "vpc" {
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
     "kubernetes.io/role/internal-elb"             = "1"
   }
-  database_subnets = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
-  create_database_subnet_group       = "true"
-  create_database_subnet_route_table = "true"
 }
+
+resource "aws_vpc_peering_connection" "east-west-peer" {
+  peer_vpc_id   = module.vpc-east.vpc_id
+  vpc_id        = module.vpc-west.vpc_id
+  peer_region   = "us-east-1"
+  provider      = aws.us-west-1
+}
+
+module "vpc-west" {
+  providers = {
+    aws = aws.us-west-1
+  }
+  source = "terraform-aws-modules/vpc/aws"
+  version = "3.14.4"
+  name = "ak-vpc-west"
+  cidr = "10.1.0.0/16"
+  azs             = data.aws_availability_zones.available_west.names
+  private_subnets = ["10.1.1.0/24", "10.1.2.0/24", "10.1.3.0/24"]
+  public_subnets  = ["10.1.101.0/24", "10.1.102.0/24", "10.1.103.0/24"]
+  enable_nat_gateway   = true
+  single_nat_gateway   = true
+  enable_dns_hostnames = true
+  tags = {
+    "kubernetes.io/cluster/${local.cluster_name_west}" = "shared"
+  }
+  public_subnet_tags = {
+    "kubernetes.io/cluster/${local.cluster_name_west}" = "shared"
+    "kubernetes.io/role/elb"                      = "1"
+  }
+  private_subnet_tags = {
+    "kubernetes.io/cluster/${local.cluster_name_west}" = "shared"
+    "kubernetes.io/role/internal-elb"             = "1"
+  }
+}
+
 
 module "eks" {
   providers = {
@@ -73,8 +120,8 @@ module "eks" {
   cluster_name    = local.cluster_name
   cluster_version = "1.22"
 
-  subnet_ids = module.vpc.private_subnets
-  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc-east.private_subnets
+  vpc_id     = module.vpc-east.vpc_id
 
   cluster_addons = {
     coredns = {
@@ -153,76 +200,92 @@ module "eks" {
   }
 }
 
-module "security_group" {
+module "eks-west" {
   providers = {
-    aws = aws.us-east-1
+    aws = aws.us-west-1
   }
-  source  = "terraform-aws-modules/security-group/aws"
+  version = "18.7.2"
+  source = "terraform-aws-modules/eks/aws"
+  //version         = "17.24.0"
+  cluster_name    = local.cluster_name
+  cluster_version = "1.22"
 
-  name        = local.name
-  description = "Complete PostgreSQL example security group"
-  vpc_id      = module.vpc.vpc_id
+  subnet_ids = module.vpc-west.private_subnets
+  vpc_id     = module.vpc-west.vpc_id
 
-  # ingress
-  ingress_with_cidr_blocks = [
-    {
-      from_port   = 5432
-      to_port     = 5432
-      protocol    = "tcp"
-      description = "PostgreSQL access from within VPC"
-      cidr_blocks = module.vpc.vpc_cidr_block
-    },
-  ]
-
-  tags = local.tags
-}
-
-module "db_default" {
-  providers = {
-    aws = aws.us-east-1
+  cluster_addons = {
+    coredns = {
+      resolve_conflicts = "OVERWRITE"
+    }
+    kube-proxy = {}
+    vpc-cni = {
+      resolve_conflicts = "OVERWRITE"
+    }
   }
-  source  = "terraform-aws-modules/rds/aws"
 
-  identifier                     = "${local.name}-default"
-  instance_use_identifier_prefix = true
+  // # Extend cluster security group rules
+  cluster_security_group_additional_rules = {
+    egress_nodes_ephemeral_ports_tcp = {
+      description                = "To node 1025-65535"
+      protocol                   = "tcp"
+      from_port                  = 1025
+      to_port                    = 65535
+      type                       = "egress"
+      source_node_security_group = true
+    }
+    ingress_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+      type        = "ingress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+    egress_all = {
+      description      = "Node all egress"
+      protocol         = "-1"
+      from_port        = 0
+      to_port          = 0
+      type             = "egress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+  }
 
-  create_db_option_group    = false
-  create_db_parameter_group = false
+  # Extend node-to-node security group rules
+  node_security_group_additional_rules = {
+    ingress_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+      type        = "ingress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+    egress_all = {
+      description      = "Node all egress"
+      protocol         = "-1"
+      from_port        = 0
+      to_port          = 0
+      type             = "egress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+  }
 
-  # All available versions: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html#PostgreSQL.Concepts
-  engine               = "postgres"
-  engine_version       = "14.1"
-  family               = "postgres14" # DB parameter group
-  major_engine_version = "14"         # DB option group
-  instance_class       = "db.t4g.micro"
+  eks_managed_node_groups = {
+    blue = {}
+    green = {
+      min_size     = 3
+      max_size     = 3
+      desired_size = 3
 
-  allocated_storage = 5
-
-  # NOTE: Do NOT use 'user' as the value for 'username' as it throws:
-  # "Error creating DB Instance: InvalidParameterValue: MasterUsername
-  # user cannot be used as it is a reserved word used by the engine"
-  db_name  = "completePostgresql"
-  username = "complete_postgresql"
-  password = "dbPassword123!"
-  port     = 5432
-
-  db_subnet_group_name   = module.vpc.database_subnet_group_name
-  vpc_security_group_ids = [module.security_group.security_group_id]
-
-  maintenance_window      = "Mon:00:00-Mon:03:00"
-  backup_window           = "03:00-06:00"
-  backup_retention_period = 0
-
-  tags = local.tags
+      instance_types = ["t2.micro"]
+      tags = {
+        ExtraTag = "ak-example"
+      }
+    }
+  }
 }
-
-
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_id
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_id
-}
-
-
