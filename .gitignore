@@ -1,3 +1,6 @@
 *.tfstate*
 *.tfvars*
 .terraform*
+demo/vault-east/values.yaml
+*.json
+*nohup*

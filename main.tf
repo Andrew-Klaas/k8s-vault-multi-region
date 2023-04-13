@@ -42,9 +42,19 @@ resource "aws_kms_key" "east-key" {
   deletion_window_in_days = 10
   provider = aws.us-east-1
 }
+resource "aws_kms_alias" "east-key-alias" {
+  name          = "alias/vault-key"
+  target_key_id = aws_kms_key.east-key.key_id
+  provider = aws.us-east-1
+}
 resource "aws_kms_key" "west-key" {
   description             = "KMS key 1"
   deletion_window_in_days = 10
+  provider = aws.us-west-1
+}
+resource "aws_kms_alias" "west-key-alias" {
+  name          = "alias/vault-key"
+  target_key_id = aws_kms_key.west-key.key_id
   provider = aws.us-west-1
 }
 
@@ -288,4 +298,37 @@ module "eks-west" {
       }
     }
   }
+}
+
+
+resource "aws_iam_access_key" "vault_iam_key" {
+  user    = aws_iam_user.vault.name
+}
+
+resource "aws_iam_user" "vault" {
+  name = "vault"
+  # path = "/system/"
+}
+
+data "aws_iam_policy_document" "vault_ro" {
+  statement {
+    effect    = "Allow"
+    actions   = ["kms:Decrypt", "kms:DescribeKey", "kms:Encrypt"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_user_policy" "vault_user_policy" {
+  name   = "test"
+  user   = aws_iam_user.vault.name
+  policy = data.aws_iam_policy_document.vault_ro.json
+}
+
+output "VAULT_AWS_ACCESS_KEY_ID" {
+  value = aws_iam_access_key.vault_iam_key.id
+}
+
+output "VAULT_AWS_SECRET_ACCESS_KEY" {
+  value = aws_iam_access_key.vault_iam_key.secret
+  sensitive = true
 }
