@@ -1,6 +1,0 @@
-path "*" {
-    capabilities = ["read", "list", "create", "update", "delete"]
-}
-path "transit/*" {
-    capabilities = ["read", "list", "create", "update", "delete"]
-}

@@ -10,29 +10,29 @@ global:
 
 server:
   enabled: true
-  # dev:
-  #   enabled: true
-  #   devRootToken: "root"
-  ha:
+  dev:
     enabled: true
-    replicas: 3
-    raft: 
-      enabled: true
-      config: |
-        ui = true
-        listener "tcp" {
-          tls_disable = 1
-          address = "[::]:8200"
-          cluster_address = "[::]:8201"
-          # Enable unauthenticated metrics access (necessary for Prometheus Operator)
-          #telemetry {
-          #  unauthenticated_metrics_access = "true"
-          #}
-        }
-        storage "raft" {
-          path = "/vault/data"
-        }
-        service_registration "kubernetes" {}
+    devRootToken: "root"
+  # ha:
+  #   enabled: true
+  #   replicas: 3
+  #   raft: 
+  #     enabled: true
+  #     config: |
+  #       ui = true
+  #       listener "tcp" {
+  #         tls_disable = 1
+  #         address = "[::]:8200"
+  #         cluster_address = "[::]:8201"
+  #         # Enable unauthenticated metrics access (necessary for Prometheus Operator)
+  #         #telemetry {
+  #         #  unauthenticated_metrics_access = "true"
+  #         #}
+  #       }
+  #       storage "raft" {
+  #         path = "/vault/data"
+  #       }
+  #       service_registration "kubernetes" {}
 
 #   service:
 #     enabled: true

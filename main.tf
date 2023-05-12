@@ -301,34 +301,34 @@ module "eks-west" {
 }
 
 
-resource "aws_iam_access_key" "vault_iam_key" {
-  user    = aws_iam_user.vault.name
-}
+# resource "aws_iam_access_key" "vault_iam_key" {
+#   user    = aws_iam_user.vault.name
+# }
 
-resource "aws_iam_user" "vault" {
-  name = "vault"
-  # path = "/system/"
-}
+# resource "aws_iam_user" "vault" {
+#   name = "vault"
+#   # path = "/system/"
+# }
 
-data "aws_iam_policy_document" "vault_ro" {
-  statement {
-    effect    = "Allow"
-    actions   = ["kms:Decrypt", "kms:DescribeKey", "kms:Encrypt"]
-    resources = ["*"]
-  }
-}
+# data "aws_iam_policy_document" "vault_ro" {
+#   statement {
+#     effect    = "Allow"
+#     actions   = ["kms:Decrypt", "kms:DescribeKey", "kms:Encrypt"]
+#     resources = ["*"]
+#   }
+# }
 
-resource "aws_iam_user_policy" "vault_user_policy" {
-  name   = "test"
-  user   = aws_iam_user.vault.name
-  policy = data.aws_iam_policy_document.vault_ro.json
-}
+# resource "aws_iam_user_policy" "vault_user_policy" {
+#   name   = "test"
+#   user   = aws_iam_user.vault.name
+#   policy = data.aws_iam_policy_document.vault_ro.json
+# }
 
-output "VAULT_AWS_ACCESS_KEY_ID" {
-  value = aws_iam_access_key.vault_iam_key.id
-}
+# output "VAULT_AWS_ACCESS_KEY_ID" {
+#   value = aws_iam_access_key.vault_iam_key.id
+# }
 
-output "VAULT_AWS_SECRET_ACCESS_KEY" {
-  value = aws_iam_access_key.vault_iam_key.secret
-  sensitive = true
-}
+# output "VAULT_AWS_SECRET_ACCESS_KEY" {
+#   value = aws_iam_access_key.vault_iam_key.secret
+#   sensitive = true
+# }
