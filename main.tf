@@ -12,10 +12,13 @@ provider "aws" {
   alias = "us-east-1"
 }
 
-# provider "aws" {
-#   region = "us-west-1"
-#   alias = "us-west-1"
-# }
+#FAKE FOR APPSEC DEMO PURPOSES
+provider "aws" {
+  region = "us-east-1"
+  alias = "us-west-1"
+  access_key = "my-access-key"
+  secret_key = "my-secret-key"
+}
 
 data "aws_availability_zones" "available" {}
 # data "aws_availability_zones" "available_west" {
