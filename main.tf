@@ -12,7 +12,9 @@ provider "aws" {
   alias = "us-east-1"
 }
 
-#FAKE FOR APPSEC DEMO PURPOSES
+######
+#FAKE FOR APPSEC DEMO PURPOSES.
+######
 provider "aws" {
   region = "us-east-1"
   alias = "us-west-1"
