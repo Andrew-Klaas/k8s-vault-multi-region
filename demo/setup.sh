@@ -1,10 +1,7 @@
 #!/bin/sh
-# cd ../
-# aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)
-# cd demo/
 
-aws eks update-kubeconfig --region us-east-1 --name $(terraform output -raw cluster_name) --alias=us-east-1
-alias ke="kubectl config use-context us-east-1; kubectl"
+# export VAULT_ADDR=http://127.0.0.1:8200
+# aws eks update-kubeconfig --region us-east-1 --name $(terraform output -raw cluster_name) --alias=us-east-1
 
 helm repo add stable https://charts.helm.sh/stable
 helm repo add hashicorp https://helm.releases.hashicorp.com
@@ -15,7 +12,9 @@ helm repo update
 
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
-helm install my-nginx ingress-nginx/ingress-nginx
+helm install my-nginx ingress-nginx/ingress-nginx \
+    --set ingressClassResource.default=true \
+    --set controller.watchIngressWithoutClass=true
 
 
 
@@ -57,7 +56,7 @@ sleep 60
 
 nohup kubectl port-forward service/vault 8200:8200 --pod-running-timeout=10m &
 
-sleep 5s
+sleep 10s
 
 export VAULT_ADDR=http://127.0.0.1:8200
 

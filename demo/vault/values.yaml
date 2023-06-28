@@ -4,9 +4,9 @@ global:
   enabled: true
   tlsDisable: true
 
-# injector:
-#   enabled: true
-#   replicas: 1
+injector:
+  enabled: false
+  replicas: 1
 
 server:
   enabled: true

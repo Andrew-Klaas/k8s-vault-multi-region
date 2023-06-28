@@ -201,9 +201,9 @@ module "eks" {
   eks_managed_node_groups = {
     blue = {}
     green = {
-      min_size     = 3
+      min_size     = 1
       max_size     = 3
-      desired_size = 3
+      desired_size = 1
 
       instance_types = ["t2.nano"]
       tags = {
