@@ -5,7 +5,7 @@ metadata:
 spec:
   selector:
     app: vault-go-demo-oauth
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     - protocol: TCP
       name: http
