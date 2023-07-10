@@ -40,6 +40,15 @@ resource "random_string" "suffix" {
   special = false
 }
 
+# create s3 bucket
+resource "aws_s3_bucket" "vault" {
+  bucket = "ak-vault-apiiro-test"
+  tags = {
+    Name        = "ak-vault"
+    Environment = "dev"
+  }
+}
+
 # resource "aws_kms_key" "east-key" {
 #   description             = "KMS key 1"
 #   deletion_window_in_days = 10

@@ -119,7 +119,6 @@ vault write database/roles/vault_go_demo \
 
 vault read database/creds/vault_go_demo
 
-
 vault secrets enable transit
 vault write -f transit/keys/my-key
 
@@ -134,7 +133,10 @@ kubectl apply -f new_vault-go-demo/
 
 exit 0
 
-
+######################
+# Ci/CD
+######################
+cat ~/.kube/config | base64 | gh secret set KUBE_CONFIG
 
 
 

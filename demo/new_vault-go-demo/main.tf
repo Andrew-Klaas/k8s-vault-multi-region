@@ -4,8 +4,33 @@ provider "aws" {
   region = "us-east-1"
 }
 
+resource "aws_route53domains_registered_domain" "example" {
+  domain_name = "andrewlklaas.com"
+  name_server {
+    name = aws_route53_zone.selected.name_servers[0]
+  }
+  name_server {
+    name = aws_route53_zone.selected.name_servers[1]
+  }
+  name_server {
+    name = aws_route53_zone.selected.name_servers[2]
+  }
+  name_server {
+    name = aws_route53_zone.selected.name_servers[3]
+  }
+  tags = {
+    Environment = "test"
+  }
+}
+
+resource "aws_route53_delegation_set" "main" {
+  reference_name = "dev.andrewlklaas.com"
+}
+
 resource "aws_route53_zone" "selected" {
   name = "dev.andrewlklaas.com"
+
+  delegation_set_id = aws_route53_delegation_set.main.id
 }
 
 data "aws_elb_hosted_zone_id" "elb_zone_id" {}
@@ -21,33 +46,27 @@ resource "aws_route53_record" "my_record" {
     evaluate_target_health = false
   }
 
-  # records = [
-  #   "ns-931.awsdns-52.net",
-  #   "ns-178.awsdns-22.com",
-  #   "ns-1157.awsdns-16.org",
-  #   "ns-1711.awsdns-21.co.uk"
-  # ]
 }
 
-resource "aws_route53_record" "dev-ns" {
-  allow_overwrite = true
-  zone_id = aws_route53_zone.selected.zone_id
-  name    = "dev.andrewlklaas.com"
-  type    = "NS"
-  ttl     = "30"
-  # records = [
-  #   "ns-931.awsdns-52.net",
-  #   "ns-178.awsdns-22.com",
-  #   "ns-1157.awsdns-16.org",
-  #   "ns-1711.awsdns-21.co.uk"
-  # ]
-    records = [
-    "ns-1290.awsdns-33.org",
-    "ns-1836.awsdns-37.co.uk",
-    "ns-468.awsdns-58.com",
-    "ns-631.awsdns-14.net"
-  ]
-}
+# resource "aws_route53_record" "dev-ns" {
+#   allow_overwrite = true
+#   zone_id = aws_route53_zone.selected.zone_id
+#   name    = "dev.andrewlklaas.com"
+#   type    = "NS"
+#   ttl     = "30"
+#   # records = [
+#   #   "ns-931.awsdns-52.net",
+#   #   "ns-178.awsdns-22.com",
+#   #   "ns-1157.awsdns-16.org",
+#   #   "ns-1711.awsdns-21.co.uk"
+#   # ]
+#   #   records = [
+#   #   "ns-1290.awsdns-33.org",
+#   #   "ns-1836.awsdns-37.co.uk",
+#   #   "ns-468.awsdns-58.com",
+#   #   "ns-631.awsdns-14.net"
+#   # ]
+# }
 
 variable "lb_hostname" {
   type    = string
