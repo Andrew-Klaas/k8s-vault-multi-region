@@ -45,6 +45,11 @@ output "cluster_name_west" {
   value       = local.cluster_name_west
 }
 
+output "mongo_db_ip" {
+  description = "Mongo DB IP"
+  value = aws_instance.mongodb-ec2-instance.public_ip 
+}
+
 # aws eks --region us-east-1 update-kubeconfig --name $(terraform output -raw cluster_name) --alias east
 
 # aws eks --region us-west-1 update-kubeconfig --name $(terraform output -raw cluster_name_west) --alias west
