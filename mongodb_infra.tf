@@ -64,6 +64,11 @@ resource "aws_iam_role" "mongodb-ec2-role" {
           Effect   = "Allow"
           Resource = "*"
         },
+        {
+          Action   = ["s3:*"]
+          Effect   = "Allow"
+          Resource = "*"
+        },
       ]
     })
   }
@@ -80,14 +85,14 @@ resource "aws_security_group" "allow_ssh_mongodb" {
 }
 resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
   security_group_id = aws_security_group.allow_ssh_mongodb.id
-  cidr_ipv4         = module.vpc-east.vpc_cidr_block
+  cidr_ipv4         = "0.0.0.0/0"
   from_port         = 22
   ip_protocol       = "tcp"
   to_port           = 22
 }
 resource "aws_vpc_security_group_ingress_rule" "allow_mongodb" {
   security_group_id = aws_security_group.allow_ssh_mongodb.id
-  cidr_ipv4         = module.vpc-east.vpc_cidr_block
+  cidr_ipv4         = "0.0.0.0/0"
   from_port         = 27017
   ip_protocol       = "tcp"
   to_port           = 27017

@@ -50,6 +50,18 @@ output "mongo_db_ip" {
   value = aws_instance.mongodb-ec2-instance.public_ip 
 }
 
+output "connect_to_instance" {
+  value = "ssh -i ~/.ssh/id_ed25519 ubuntu@$(terraform output -raw mongo_db_ip)"
+}
+
+output "connect_to_eks"  {
+  value = "aws eks --region us-east-1 update-kubeconfig --name $(terraform output -raw cluster_name) --alias east"
+}
+
+output "connect_to_mongodb" {
+  value = "mongosh mongodb://<user>:<password>@$(terraform output -raw mongo_db_ip):27017"
+}
+
 # aws eks --region us-east-1 update-kubeconfig --name $(terraform output -raw cluster_name) --alias east
 
 # aws eks --region us-west-1 update-kubeconfig --name $(terraform output -raw cluster_name_west) --alias west
