@@ -17,6 +17,7 @@ provider "aws" {
 #   alias = "us-west-1"
 # }
 
+
 data "aws_availability_zones" "available" {}
 # data "aws_availability_zones" "available_west" {
 #   provider = aws.us-west-1
@@ -58,12 +59,34 @@ resource "aws_kms_alias" "east-key-alias" {
 #   provider = aws.us-west-1
 # }
 
+
+# resource "aws_kms_key" "east-key" {
+#   description             = "KMS key 1"
+#   deletion_window_in_days = 10
+#   provider = aws.us-east-1
+# }
+# resource "aws_kms_alias" "east-key-alias" {
+#   name          = "alias/vault-key"
+#   target_key_id = aws_kms_key.east-key.key_id
+#   provider = aws.us-east-1
+# }
+# resource "aws_kms_key" "west-key" {
+#   description             = "KMS key 1"
+#   deletion_window_in_days = 10
+#   provider = aws.us-west-1
+# }
+# resource "aws_kms_alias" "west-key-alias" {
+#   name          = "alias/vault-key"
+#   target_key_id = aws_kms_key.west-key.key_id
+#   provider = aws.us-west-1
+# }
+
 module "vpc-east" {
   providers = {
     aws = aws.us-east-1
   }
   source = "terraform-aws-modules/vpc/aws"
-  version = "3.14.4"
+  # version = "3.14.4"
   name = "ak-vpc"
   cidr = "10.0.0.0/16"
   azs             = data.aws_availability_zones.available.names
@@ -120,6 +143,33 @@ module "vpc-east" {
 # }
 
 
+# module "vpc-west" {
+#   providers = {
+#     aws = aws.us-west-1
+#   }
+#   source = "terraform-aws-modules/vpc/aws"
+#   version = "3.14.4"
+#   name = "ak-vpc-west"
+#   cidr = "10.1.0.0/16"
+#   azs             = data.aws_availability_zones.available_west.names
+#   private_subnets = ["10.1.1.0/24", "10.1.2.0/24", "10.1.3.0/24"]
+#   public_subnets  = ["10.1.101.0/24", "10.1.102.0/24", "10.1.103.0/24"]
+#   enable_nat_gateway   = true
+#   single_nat_gateway   = true
+#   enable_dns_hostnames = true
+#   tags = {
+#     "kubernetes.io/cluster/${local.cluster_name_west}" = "shared"
+#   }
+#   public_subnet_tags = {
+#     "kubernetes.io/cluster/${local.cluster_name_west}" = "shared"
+#     "kubernetes.io/role/elb"                      = "1"
+#   }
+#   private_subnet_tags = {
+#     "kubernetes.io/cluster/${local.cluster_name_west}" = "shared"
+#     "kubernetes.io/role/internal-elb"             = "1"
+#   }
+# }
+
 module "eks" {
   providers = {
     aws = aws.us-east-1
@@ -142,6 +192,7 @@ module "eks" {
       resolve_conflicts = "OVERWRITE"
     }
   }
+  // create an s3 bucket for the cluste
 
   // # Extend cluster security group rules
   cluster_security_group_additional_rules = {
@@ -198,11 +249,11 @@ module "eks" {
   eks_managed_node_groups = {
     blue = {}
     green = {
-      min_size     = 3
+      min_size     = 1
       max_size     = 3
-      desired_size = 3
+      desired_size = 1
 
-      instance_types = ["t2.micro"]
+      instance_types = ["t2.nano"]
       tags = {
         ExtraTag = "ak-example"
       }

@@ -4,11 +4,14 @@ global:
   enabled: true
   tlsDisable: true
 
-# injector:
-#   enabled: true
-#   replicas: 1
+injector:
+  enabled: false
+  replicas: 1
 
 server:
+  image:
+    repository: "hashicorp/vault"
+    tag: "1.13.0"
   enabled: true
   dev:
     enabled: true

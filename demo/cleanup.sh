@@ -5,6 +5,7 @@ kubectl delete -f pq_template
 kubectl delete -f vault_template
 # helm delete consul
 helm delete vault
+helm delete my-nginx
 
 # kubectl delete pvc data-default-consul-server-0
 # kubectl delete pvc data-default-consul-server-1
