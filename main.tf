@@ -12,13 +12,11 @@ provider "aws" {
   alias = "us-east-1"
 }
 
-#Fake for appsec demo purposes
-provider "aws" {
-  region = "us-east-1"
-  alias = "us-west-1"
-  access_key = "my-access-key"
-  secret_key = "my-secret-key"
-}
+# provider "aws" {
+#   region = "us-west-1"
+#   alias = "us-west-1"
+# }
+
 
 data "aws_availability_zones" "available" {}
 # data "aws_availability_zones" "available_west" {
@@ -40,14 +38,27 @@ resource "random_string" "suffix" {
   special = false
 }
 
-# create s3 bucket
-resource "aws_s3_bucket" "vault" {
-  bucket = "ak-vault-apiiro-test"
-  tags = {
-    Name        = "ak-vault"
-    Environment = "dev"
-  }
+resource "aws_kms_key" "east-key" {
+  description             = "KMS key 1"
+  deletion_window_in_days = 10
+  provider = aws.us-east-1
 }
+resource "aws_kms_alias" "east-key-alias" {
+  name          = "alias/vault-key"
+  target_key_id = aws_kms_key.east-key.key_id
+  provider = aws.us-east-1
+}
+# resource "aws_kms_key" "west-key" {
+#   description             = "KMS key 1"
+#   deletion_window_in_days = 10
+#   provider = aws.us-west-1
+# }
+# resource "aws_kms_alias" "west-key-alias" {
+#   name          = "alias/vault-key"
+#   target_key_id = aws_kms_key.west-key.key_id
+#   provider = aws.us-west-1
+# }
+
 
 # resource "aws_kms_key" "east-key" {
 #   description             = "KMS key 1"
@@ -103,6 +114,34 @@ module "vpc-east" {
 #   peer_region   = "us-east-1"
 #   provider      = aws.us-west-1
 # }
+
+# module "vpc-west" {
+#   providers = {
+#     aws = aws.us-west-1
+#   }
+#   source = "terraform-aws-modules/vpc/aws"
+#   version = "3.14.4"
+#   name = "ak-vpc-west"
+#   cidr = "10.1.0.0/16"
+#   azs             = data.aws_availability_zones.available_west.names
+#   private_subnets = ["10.1.1.0/24", "10.1.2.0/24", "10.1.3.0/24"]
+#   public_subnets  = ["10.1.101.0/24", "10.1.102.0/24", "10.1.103.0/24"]
+#   enable_nat_gateway   = true
+#   single_nat_gateway   = true
+#   enable_dns_hostnames = true
+#   tags = {
+#     "kubernetes.io/cluster/${local.cluster_name_west}" = "shared"
+#   }
+#   public_subnet_tags = {
+#     "kubernetes.io/cluster/${local.cluster_name_west}" = "shared"
+#     "kubernetes.io/role/elb"                      = "1"
+#   }
+#   private_subnet_tags = {
+#     "kubernetes.io/cluster/${local.cluster_name_west}" = "shared"
+#     "kubernetes.io/role/internal-elb"             = "1"
+#   }
+# }
+
 
 # module "vpc-west" {
 #   providers = {
