@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "example" {
   bucket = "ak-tf-test-demo-bucketw"
+  force_destroy = true
 
   tags = {
     Name        = "ak demo"
