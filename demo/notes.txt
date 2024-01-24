@@ -1,4 +1,0 @@
-There are multiple Consul services registered for this pod when there must only be one. 
-Check if there are multiple Kubernetes services selecting this 
-pod and add the label `consul.hashicorp.com/service-ignore: "true"` 
-to all services except the one used by Consul for handling requests.

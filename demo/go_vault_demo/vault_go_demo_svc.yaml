@@ -1,3 +1,12 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: vault-go-demo
+  namespace: default
+spec:
+  protocol: http
+---
 kind: Service
 apiVersion: v1
 metadata:

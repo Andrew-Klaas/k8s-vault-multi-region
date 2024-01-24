@@ -3,41 +3,12 @@
 export VAULT_ADDR=http://127.0.0.1:8200
 aws eks update-kubeconfig --region us-east-1 --name $(terraform output -raw cluster_name) --alias=us-east-1
 
-# cat << EOF | kubectl apply -f -
-# apiVersion: storage.k8s.io/v1
-# kind: StorageClass
-# metadata:
-#   name: ebs-sc
-# provisioner: kubernetes.io/aws-ebs
-# parameters:
-#   type: gp2
-# reclaimPolicy: Retain
-# volumeBindingMode: WaitForFirstConsumer
-# EOF
 
 helm repo add stable https://charts.helm.sh/stable
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 
-# helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-# helm repo update
-# helm install my-nginx ingress-nginx/ingress-nginx \
-#     --set ingressClassResource.default=true \
-#     --set controller.watchIngressWithoutClass=true
-
-
-
-
-####################################################
-#CONSUL HASHICUPS & API GW
-####################################################
-# consul-k8s install -config-file=nnconsul/values.yaml
-# kubectl apply -f nnconsul/learn-consul-api-gateway/self-managed/k8s-services
-# kubectl apply --filename nnconsul/learn-consul-api-gateway/self-managed/api-gw/consul-api-gateway.yaml
-# export APIGW_URL=$(kubectl get services --namespace=consul api-gateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}') && echo $APIGW_URL
-# kubectl apply --filename nnconsul/learn-consul-api-gateway/self-managed/api-gw/ingress-hashicups-frontend.yaml
-# echo "http://$APIGW_URL" && echo "http://$APIGW_URL/hashicups"
 
 helm install consul hashicorp/consul -f nnconsul/values.yaml
 kubectl apply --filename nnconsul/gateway.yaml
@@ -45,6 +16,7 @@ export APIGW_URL=$(kubectl get services --namespace=default api-gateway -o jsonp
 # consul-k8s install -namespace=default -config-file=nnconsul/values.yaml
 sleep 30s
 nohup kubectl port-forward service/consul-ui 8500:80 --pod-running-timeout=10m &
+#kubectl debug api-gateway-5869679dc8-njjr6 -n default -it --image nicolaka/netshoot
 
 export CONSUL_DNS_IP=$(kubectl get svc consul-dns --output jsonpath='{.spec.clusterIP}')
 cat <<EOF | kubectl apply --filename -
@@ -93,12 +65,6 @@ vault policy write transit-app-example transit-app-example.policy
 
 kubectl create serviceaccount vault-auth
 kubectl apply --filename vault/vault-auth-service-account.yaml
-
-# export VAULT_SA_NAME=vault-auth
-# export SA_JWT_TOKEN=$(kubectl get secret $VAULT_SA_NAME -o jsonpath="{.data.token}" | base64 --decode; echo)
-# export SA_CA_CRT=$(kubectl get secret $VAULT_SA_NAME -o jsonpath="{.data['ca\.crt']}" | base64 --decode; echo)
-# export K8S_HOST="https://kubernetes.default.svc:443"
-
 
 export SA_SECRET_NAME=$(kubectl get secrets --output=json \
     | jq -r '.items[].metadata | select(.name|startswith("vault-auth-")).name')

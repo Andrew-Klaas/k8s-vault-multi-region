@@ -13,6 +13,12 @@ spec:
     allowedRoutes:
       namespaces:
         from: All # options: All or Same or <Specific>
+  - protocol: HTTP # options: HTTP or HTTPS
+    port: 9090 # options: 80 or 443 or custom
+    name: http-go
+    allowedRoutes:
+      namespaces:
+        from: All # options: All or Same or <Specific>
     # tls:
     #   certificateRefs:
     #     - name: cert
