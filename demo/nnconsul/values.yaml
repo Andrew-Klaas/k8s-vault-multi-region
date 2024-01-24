@@ -1,0 +1,53 @@
+global:
+  enabled: true
+  name: consul
+  datacenter: dc1
+connectInject:
+  transparentProxy:
+    defaultEnabled: true
+  enabled: true
+  default: true
+  apiGateway:
+    manageExternalCRDs: true
+    managedGatewayClass:
+      serviceType: LoadBalancer
+server:
+  replicas: 3
+  connect: true
+client:
+  enabled: true
+  grpc: true
+dns:
+  enabled: true
+  type: ClusterIP
+syncCatalog:
+  enabled: true
+  default: true
+  toConsul: true
+  toK8S: true
+ui:
+  enabled: true
+  service:
+    type: NodePort
+controller:
+  enabled: true
+meshGateway:
+  enabled: true
+  replicas: 1
+ingressGateways:
+  enabled: true
+  defaults:
+    replicas: 1
+  gateways:
+    - name: ingress-gateway
+      service:
+        type: LoadBalancer
+        ports:
+          - port: 9090
+          - port: 8080
+terminatingGateways:
+  enabled: true
+  defaults:
+    replicas: 1
+webhookCertManager:
+  tolerations: null
