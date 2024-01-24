@@ -17,7 +17,6 @@ provider "aws" {
 #   alias = "us-west-1"
 # }
 
-
 data "aws_availability_zones" "available" {}
 # data "aws_availability_zones" "available_west" {
 #   provider = aws.us-west-1
@@ -26,7 +25,7 @@ data "aws_availability_zones" "available" {}
 locals {
   cluster_name = "ak-${random_string.suffix.result}"
   cluster_name_west = "ak-${random_string.suffix.result}"
-  name = "ak-teleport"
+  name = "ak"
   tags = {
     Owner       = "user"
     Environment = "dev"
@@ -174,22 +173,32 @@ module "eks" {
   providers = {
     aws = aws.us-east-1
   }
-  version = "18.7.2"
+  version = "19.21.0"
   source = "terraform-aws-modules/eks/aws"
   //version         = "17.24.0"
   cluster_name    = local.cluster_name
-  cluster_version = "1.22"
+  cluster_version = "1.27"
+
+
+  cluster_endpoint_public_access  = true
+  cluster_endpoint_private_access = true
+
 
   subnet_ids = module.vpc-east.private_subnets
   vpc_id     = module.vpc-east.vpc_id
 
   cluster_addons = {
     coredns = {
-      resolve_conflicts = "OVERWRITE"
+      most_recent = true
     }
-    kube-proxy = {}
+    kube-proxy = {
+      most_recent = true
+    }
     vpc-cni = {
-      resolve_conflicts = "OVERWRITE"
+      most_recent = true
+    }
+    aws-ebs-csi-driver = {
+      most_recent = true
     }
   }
   // create an s3 bucket for the cluste
@@ -249,11 +258,15 @@ module "eks" {
   eks_managed_node_groups = {
     blue = {}
     green = {
-      min_size     = 1
+    # default = {
+      min_size     = 3
       max_size     = 3
-      desired_size = 1
+      desired_size = 3
+      iam_role_additional_policies = {
+        AmazonEBSCSIDriverPolicy = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+      }
 
-      instance_types = ["t2.nano"]
+      instance_types = ["t2.large"]
       tags = {
         ExtraTag = "ak-example"
       }

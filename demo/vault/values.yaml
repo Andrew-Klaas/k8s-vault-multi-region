@@ -4,52 +4,41 @@ global:
   enabled: true
   tlsDisable: true
 
-injector:
-  enabled: false
-  replicas: 1
-
 server:
   image:
     repository: "hashicorp/vault"
-    tag: "1.13.0"
+    tag: "1.15.2"
   enabled: true
+  type: ClusterIP
   dev:
     enabled: true
     devRootToken: "root"
-  # ha:
-  #   enabled: true
-  #   replicas: 3
-  #   raft: 
-  #     enabled: true
-  #     config: |
-  #       ui = true
-  #       listener "tcp" {
-  #         tls_disable = 1
-  #         address = "[::]:8200"
-  #         cluster_address = "[::]:8201"
-  #         # Enable unauthenticated metrics access (necessary for Prometheus Operator)
-  #         #telemetry {
-  #         #  unauthenticated_metrics_access = "true"
-  #         #}
-  #       }
-  #       storage "raft" {
-  #         path = "/vault/data"
-  #       }
-  #       service_registration "kubernetes" {}
-
-#   service:
-#     enabled: true
-#     type: ClusterIP
+  annotations:
+    consul.hashicorp.com/kubernetes-service: 'vault' 
+    consul.hashicorp.com/connect-inject: "true"
+  extraLabels: 
+    consul.hashicorp.com/connect-inject: "true"
+  service:
+    enabled: true
+    annotations:
+       consul.hashicorp.com/kubernetes-service: 'vault' 
+       consul.hashicorp.com/connect-inject: "true"
+    extraLabels: 
+       consul.hashicorp.com/connect-inject: "true"
+     
+injector:
+  enabled: false
 
 ui:
   enabled: true
   serviceType: "ClusterIP"
   externalPort: 8200
+  annotations:
+       consul.hashicorp.com/service-ignore: "true"
+  extraLabels: 
+       consul.hashicorp.com/service-ignore: "true"
+     
 
-csi:
-  enabled: false
-  image:
-    repository: "hashicorp/vault-csi-provider"
-    tag: "0.2.0"
-    pullPolicy: IfNotPresent
+
+
 
